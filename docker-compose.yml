@@ -60,7 +60,89 @@ services:
       timeout: 5s
       retries: 12
 
+  ticket-confirmation:
+    build:
+      context: .
+      dockerfile: services/ticket_confirmation/Dockerfile
+    depends_on:
+      mlflow:
+        condition: service_healthy
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MODEL_TRAINING_ROWS: ${MODEL_TRAINING_ROWS:-1200}
+      AUDIT_LOG_PATH: /var/lib/railway/audit/events.jsonl
+    ports:
+      - "127.0.0.1:${TICKET_SERVICE_PORT:-8001}:8000"
+    volumes:
+      - audit_data:/var/lib/railway/audit
+    restart: on-failure
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  delay-prediction:
+    build:
+      context: .
+      dockerfile: services/delay_prediction/Dockerfile
+    depends_on:
+      mlflow:
+        condition: service_healthy
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MODEL_TRAINING_ROWS: ${MODEL_TRAINING_ROWS:-1200}
+      AUDIT_LOG_PATH: /var/lib/railway/audit/events.jsonl
+    ports:
+      - "127.0.0.1:${DELAY_SERVICE_PORT:-8002}:8000"
+    volumes:
+      - audit_data:/var/lib/railway/audit
+    restart: on-failure
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  fare-prediction:
+    build:
+      context: .
+      dockerfile: services/fare_prediction/Dockerfile
+    depends_on:
+      mlflow:
+        condition: service_healthy
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MODEL_TRAINING_ROWS: ${MODEL_TRAINING_ROWS:-1200}
+      AUDIT_LOG_PATH: /var/lib/railway/audit/events.jsonl
+    ports:
+      - "127.0.0.1:${FARE_SERVICE_PORT:-8003}:8000"
+    volumes:
+      - audit_data:/var/lib/railway/audit
+    restart: on-failure
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
 volumes:
   postgres_data:
   redis_data:
   mlflow_artifacts:
+  audit_data:

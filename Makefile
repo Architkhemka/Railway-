@@ -24,7 +24,7 @@ format:
 	ruff format .
 
 typecheck:
-	mypy src
+	mypy src services
 
 test:
 	pytest
@@ -37,7 +37,7 @@ db-upgrade:
 
 check: lint
 	ruff format --check .
-	mypy src
+	mypy src services
 	pytest
 
 services-up:

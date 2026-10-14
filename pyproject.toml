@@ -10,11 +10,18 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "alembic==1.16.2",
+    "fastapi==0.115.14",
+    "mlflow==3.1.1",
+    "numpy==2.2.6",
     "pydantic==2.14.1",
     "pydantic-settings==2.15.0",
     "PyJWT[crypto]==2.10.1",
+    "prometheus-client==0.22.1",
     "psycopg[binary]==3.2.10",
+    "scikit-learn==1.7.0",
+    "shap==0.48.0",
     "SQLAlchemy==2.0.41",
+    "uvicorn[standard]==0.34.3",
 ]
 
 [project.scripts]
@@ -27,6 +34,7 @@ dev = [
     "pytest==8.3.5",
     "pytest-cov==6.1.1",
     "ruff==0.11.13",
+    "httpx==0.28.1",
 ]
 
 [tool.setuptools.packages.find]
@@ -45,6 +53,10 @@ mypy_path = "src"
 strict = true
 files = ["src"]
 plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["shap", "shap.*", "sklearn", "sklearn.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

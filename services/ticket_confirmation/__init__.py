@@ -1,0 +1,1 @@
+"""Ticket confirmation prediction service."""

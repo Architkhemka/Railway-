@@ -2,7 +2,7 @@
 
 ## Target platform
 
-The diagrams describe the intended platform boundaries from the problem statement. Phases 0 and 1 deliver the repository tooling, local PostgreSQL/Redis/MLflow dependencies, shared Python libraries, initial data models, and synthetic data loaders. Passenger-facing and governance services below are not implemented yet.
+The diagrams describe the intended platform boundaries from the problem statement. Phases 0-2 deliver repository tooling, shared libraries, initial data models and synthetic data loaders, plus the ticket confirmation, delay/disruption, and fare prediction services.
 
 ```mermaid
 flowchart LR
@@ -22,6 +22,13 @@ flowchart LR
     Fare --> Data
     Support --> Knowledge[(Railway policy knowledge)]
     Fraud --> Data
+
+    Ticket -. MLflow registered model .-> MLflow[MLflow]
+    Delay -. MLflow registered model .-> MLflow
+    Fare -. MLflow registered models .-> MLflow
+    Ticket -. hash-chained events .-> Audit[(Audit JSONL volume)]
+    Delay -. hash-chained events .-> Audit
+    Fare -. hash-chained events .-> Audit
 
     Ticket --> Governance[AI Governance Layer]
     Recommendation --> Governance
@@ -76,4 +83,4 @@ flowchart LR
     MLflow --> Artifacts[(Persistent artifact volume)]
 ```
 
-PostgreSQL, Redis, and MLflow are exposed on localhost for development. The Compose stack uses named volumes for database, Redis, and MLflow artifact persistence. MLflow is unauthenticated and must not be exposed to an untrusted network.
+PostgreSQL, Redis, and MLflow are exposed on localhost for development. The Compose stack uses named volumes for database, Redis, MLflow artifacts, and service audit events. MLflow is unauthenticated and must not be exposed to an untrusted network. The Phase 2 APIs run on ports 8001-8003; each trains seeded synthetic-data models, registers them in MLflow, loads the latest registered versions, and exposes health and Prometheus metrics. Model-registration, model-load, and prediction events are stored in a shared hash-chained JSONL volume. This is not the centralized governance monitoring scheduled for Phase 4.

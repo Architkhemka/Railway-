@@ -1,6 +1,6 @@
 # AI-Powered Intelligent Railway Travel & Autonomous AI Governance Platform
 
-Phase 0 established the project scaffold, quality tooling, CI, and local development dependencies. Phase 1 adds shared configuration, logging, JWT/RBAC, database models and migrations, plus reproducible synthetic datasets. Passenger-facing and governance services remain future-phase work.
+Phase 0 established the project scaffold, quality tooling, CI, and local development dependencies. Phase 1 adds shared configuration, logging, JWT/RBAC, database models and migrations, plus reproducible synthetic datasets. Phase 2 adds ticket confirmation, train delay/disruption, and dynamic fare prediction services.
 
 ## Prerequisites
 
@@ -19,7 +19,7 @@ cp .env.example .env
 make services-up
 ```
 
-The local dependency stack exposes PostgreSQL on port 5432, Redis on port 6379, and MLflow on port 5000. The MLflow tracking UI is available at <http://localhost:5000>. These services are for local development only; MLflow is not configured with authentication.
+The local stack exposes PostgreSQL on port 5432, Redis on port 6379, and MLflow on port 5000. Starting Compose also builds and starts the Phase 2 services on ports 8001-8003. MLflow's tracking UI is available at <http://localhost:5000>. These services are for local development only; MLflow is not configured with authentication.
 
 ## Quality checks
 
@@ -28,7 +28,7 @@ make check
 pre-commit run --all-files
 ```
 
-Individual commands are available through `make lint`, `make typecheck`, and `make test`. Run `make help` to see the available targets.
+Individual commands are available through `make lint`, `make typecheck`, and `make test`. Run `make help` to see the available targets. Model and service tests run with `pytest`.
 
 ## Synthetic data
 
@@ -58,6 +58,26 @@ The seed makes each dataset reproducible. Every row contains `is_drifted` and `i
 
 With the local PostgreSQL service running and `.env` configured, apply the initial schema using `make db-upgrade` (or `alembic upgrade head`). The Phase 1 schema covers schedules, bookings, cancellations, delays, fares, user behavior, support conversations, and fraud events.
 
+## Phase 2 prediction services
+
+Each service trains a seeded model from the Phase 1 synthetic data, logs training parameters and metrics to MLflow, and registers the fitted model before starting its API container. Configure `MLFLOW_TRACKING_URI` for local model training; Docker Compose points each service at the internal MLflow endpoint. The default synthetic training size is 1,200 rows and can be changed with `MODEL_TRAINING_ROWS`.
+
+| Service | Local URL | Prediction endpoint |
+| --- | --- | --- |
+| Ticket confirmation | <http://localhost:8001> | `POST /v1/ticket/predict` |
+| Delay and disruption | <http://localhost:8002> | `POST /v1/delay/predict` |
+| Dynamic fare | <http://localhost:8003> | `POST /v1/fare/predict` |
+
+All services expose `GET /health` and `GET /metrics`. Successful predictions include the registered model version, confidence, and SHAP feature contributions. The ticket request takes `ticket_status` (`WL` or `RAC`), `waitlist_position`, `days_until_departure`, and `travel_class`. The delay request takes `train_number`, `station_code`, `historical_delay_minutes`, and `observation_hour`. The fare request takes `travel_class`, `base_fare`, `current_fare`, `demand_index`, and `days_until_departure`. Example:
+
+```bash
+curl -X POST http://localhost:8001/v1/ticket/predict \
+  -H 'Content-Type: application/json' \
+  -d '{"ticket_status":"WL","waitlist_position":8,"days_until_departure":12,"travel_class":"3A"}'
+```
+
+Model-registration, model-load, and prediction governance events are written to the shared hash-chained JSONL audit volume (`data/audit/events.jsonl` for local non-container runs). Delay alternatives are generic suggestions, not live timetable options; fare windows are model estimates, not guaranteed prices. Models train on synthetic labels and are demonstration baselines, not production forecasts.
+
 ## Project references
 
 - [Problem statement](docs/problem_statement.md)
@@ -66,4 +86,4 @@ With the local PostgreSQL service running and `.env` configured, apply the initi
 
 ## Current scope
 
-This repository currently contains Phase 0 and Phase 1 foundations. Model services, governance workflows, and passenger-facing applications are planned work and are not available yet.
+This repository currently contains Phase 0-2 foundations and prediction services. Recommendation and fraud models, the full governance workflows, agents, and passenger-facing applications remain future-phase work.
