@@ -1,4 +1,4 @@
-.PHONY: help install lint format typecheck test check services-up services-down services-logs
+.PHONY: help install lint format typecheck test check data-generate db-upgrade services-up services-down services-logs
 
 help:
 	@printf '%s\n' \
@@ -8,6 +8,8 @@ help:
 	  'typecheck      Run mypy' \
 	  'test           Run pytest with coverage' \
 	  'check          Run lint, formatting, type checks, and tests' \
+	  'data-generate  Generate seeded synthetic CSV datasets' \
+	  'db-upgrade     Apply Alembic migrations to the configured database' \
 	  'services-up    Start PostgreSQL, Redis, and MLflow' \
 	  'services-down  Stop local dependency services' \
 	  'services-logs  Follow local dependency service logs'
@@ -26,6 +28,12 @@ typecheck:
 
 test:
 	pytest
+
+data-generate:
+	railway-generate-data
+
+db-upgrade:
+	alembic upgrade head
 
 check: lint
 	ruff format --check .

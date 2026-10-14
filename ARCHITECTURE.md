@@ -2,7 +2,7 @@
 
 ## Target platform
 
-The diagrams describe the intended platform boundaries from the problem statement. Phase 0 delivers only the repository scaffold and local PostgreSQL, Redis, and MLflow dependencies; the passenger and governance services below are not implemented yet.
+The diagrams describe the intended platform boundaries from the problem statement. Phases 0 and 1 deliver the repository tooling, local PostgreSQL/Redis/MLflow dependencies, shared Python libraries, initial data models, and synthetic data loaders. Passenger-facing and governance services below are not implemented yet.
 
 ```mermaid
 flowchart LR
